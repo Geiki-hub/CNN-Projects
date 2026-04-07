@@ -11,7 +11,7 @@ from tensorflow.keras.layers import GlobalAveragePooling2D
 from tensorflow.keras.callbacks import ModelCheckpoint
 
 # Set parameters
-IMAGE_SIZE = (256, 256)  # Resize images to 224x224
+IMAGE_SIZE = (256, 256)
 train_path = r'C:\Users\kikit\OneDrive\Documents\UNIMAP PHD\2. TRAIN DATASET SPLIT\TRAINING (80%)'  # Set the path to your training data
 valid_path = r'C:\Users\kikit\OneDrive\Documents\UNIMAP PHD\2. TRAIN DATASET SPLIT\VALIDATION (10%)'  # Set the path to your validation data
 test_path = r'C:\Users\kikit\OneDrive\Documents\UNIMAP PHD\2. TRAIN DATASET SPLIT\TESTING (10%)'
