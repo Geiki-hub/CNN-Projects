@@ -37,6 +37,30 @@ The study evaluates predictive performance, computational efficiency, and model 
 
 ---
 
+## Requirements
+
+Software requirements:
+
+- Python 3.10
+- PyTorch 2.2
+- torchvision 0.23
+- NumPy
+- Pillow
+- scikit-image
+- matplotlib
+
+Hardware (recommended):
+
+- NVIDIA GPU with CUDA 12 support
+- Minimum 16GB RAM
+
+Development environment used in study:
+
+- GPU: NVIDIA Tesla T4 (16GB)
+- CPU: Intel Core i7-10510U / Intel Core i5-13400F
+
+---
+
 ## Dataset
 
 - 120 whole-slide images (WSIs)
@@ -106,9 +130,46 @@ MobileNetV2 demonstrated the best balance between predictive performance and com
 
 ---
 
+## Limitations
+
+- Single-center dataset
+- Patch-level evaluation only
+- No external validation cohort
+- No multi-scale feature modeling
+- No segmentation-based preprocessing
+
+---
+
+## Future Work
+
+Future improvements may include:
+
+- Multi-center dataset validation
+- Slide-level aggregation methods (MIL)
+- Transformer-based architectures
+- Multi-scale feature extraction
+- Integration into clinical decision support systems
+
+---
+
 ## Explainability
 
 Grad-CAM visualization was applied to highlight morphological regions contributing to model predictions, enabling qualitative interpretation of learned histopathological features.
+
+---
+
+## Contribution Guidelines
+
+Contributions are welcome.
+
+Recommended workflow:
+
+1. Fork repository
+2. Create new branch
+3. Commit changes
+4. Submit pull request
+
+For major changes, please open an issue first to discuss proposed modifications.
 
 ---
 
@@ -123,6 +184,11 @@ Supported by:
 
 ## Contact
 Corresponding Author:
+
 Chee Chin Lim
+
+Faculty of Electronic Engineering & Technology
+
 Universiti Malaysia Perlis
-cclim@unimap.edu.my
+
+Email: cclim@unimap.edu.my
