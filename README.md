@@ -113,4 +113,72 @@ Grad-CAM visualization was applied to highlight morphological regions contributi
 ---
 
 ## Repository Structure
+├── data/
+│ ├── raw_wsi/
+│ ├── patches/
+│
+├── preprocessing/
+│ ├── stain_normalization.py
+│ ├── patch_extraction.py
+│
+├── models/
+│ ├── densenet121.py
+│ ├── mobilenetv2.py
+│ ├── resnet50.py
+│ ├── vgg16.py
+│
+├── training/
+│ ├── train.py
+│ ├── evaluation.py
+│
+├── explainability/
+│ ├── gradcam.py
+│
+├── results/
+│ ├── metrics/
+│ ├── figures/
+│
+└── README.md
+---
 
+## Reproducibility
+Fixed random seeds
+Controlled hyperparameters
+Standardized preprocessing
+Identical training pipeline across models
+
+---
+
+## Limitations
+Single-center dataset
+Patch-level evaluation only
+No multi-scale modeling
+External validation not included
+
+---
+
+## Future Work
+Multi-center validation
+Slide-level aggregation (MIL)
+Transformer-CNN hybrid architectures
+Multi-scale feature learning
+Clinical decision support tool integration
+
+---
+
+## Acknowledgements
+
+Supported by:
+
+Fundamental Research Grant Scheme (FRGS), Ministry of Higher Education Malaysia
+Universiti Sains Malaysia RU Top Down Grant
+
+---
+
+## Contact
+
+Corresponding Author:
+Chee Chin Lim
+
+Universiti Malaysia Perlis
+cclim@unimap.edu.my
