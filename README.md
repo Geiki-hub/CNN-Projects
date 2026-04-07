@@ -122,9 +122,7 @@ Supported by:
 ---
 
 ## Contact
-
-- Corresponding Author:
-- Chee Chin Lim
-
-- Universiti Malaysia Perlis
-- cclim@unimap.edu.my
+Corresponding Author:
+Chee Chin Lim
+Universiti Malaysia Perlis
+cclim@unimap.edu.my
