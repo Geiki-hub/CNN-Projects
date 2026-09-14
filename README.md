@@ -95,6 +95,28 @@ All models were trained under identical conditions:
 
 | Parameter | Value |
 |----------|------|
+| Framework | TensorFlow 2.15.0 / Keras |
+| Transfer learning strategy	| Feature extraction (pre-trained ImageNet backbone frozen) |
+| Total dataset size	| 120 WSIs (463,200 patches) |
+| Image size |	256×256 pixels |
+| Train: Validation: Test |	0.8: 0.1: 0.1 |
+|  Data augmentation	| None |
+| Optimizer |	Adam |
+| Optimizer β_1,β_2 | 0.9, 0.999 |
+| Learning rate	| 0.001 |
+| Learning rate scheduler |	None |
+| Loss function |	Binary Cross-Entropy |
+| Weight decay |	None |
+| Activation function |	Pre-trained backbone activations; Sigmoid (output classification unit) |
+| Batch size	| 64 |
+| Label smoothing |	None |
+| Model selection / Callback |	‘ModelCheckpoint’ (monitored validation loss, ‘save_best_only=True’) |
+| Number of Epochs |	30, 50, 100, 150, 200 |
+
+---
+
+| Parameter | Value |
+|----------|------|
 | Optimizer | Adam |
 | Loss | Binary Cross-Entropy |
 | Batch size | 64 |
