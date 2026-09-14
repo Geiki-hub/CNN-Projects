@@ -1,113 +1,79 @@
-import torch
-import torch.nn.functional as F
-from torchvision import transforms
-from torchvision.models import (
-    vgg16, VGG16_Weights,
-    resnet50, ResNet50_Weights,
-    densenet121, DenseNet121_Weights,
-    mobilenet_v2, MobileNet_V2_Weights
-)
-from PIL import Image
-import numpy as np
+import os
 import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
-# --- Device ---
-device = "cuda" if torch.cuda.is_available() else "cpu"
+img_path = r"xxx"
+IMG_SIZE = (256, 256)
 
-# --- Models with updated weights API ---
-models_dict = {
-    "VGG16": vgg16(weights=VGG16_Weights.DEFAULT).to(device).eval(),
-    "ResNet50": resnet50(weights=ResNet50_Weights.DEFAULT).to(device).eval(),
-    "DenseNet121": densenet121(weights=DenseNet121_Weights.DEFAULT).to(device).eval(),
-    "MobileNetV2": mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT).to(device).eval(),
-}
+def get_img_array(image_path, size):
+  img = load_img(image_path, target_size=size)
+  array = img_to_array(img)
+  array = array / 255.0
+  array = np.expand_dims(array, axis=0)
+  return array, img
 
-# --- Preprocessing ---
-preprocess = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225]),
-])
+def find_target_layer(model, layer_name):
+  try:
+    return model.get_layer(layer_name)
+  except ValueError:
+    for layer in model.layers:
+      if hasattr(layer, "layers"):
+        try:
+          return layer.get_layer(layer_name)
+        except ValueError:
+          continue
+  raise ValueError(f"Layer '{layer_name}' not found in the model architecture.")
 
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
+  target_layer = find_target_layer(model, last_conv_layer_name)
+    
+  grad_model = tf.keras.models.Model(
+      inputs=model.inputs, outputs=[target_layer.output, model.output]
+  )
 
-# --- Grad-CAM function ---
-def grad_cam(model, img_pil):
-    target = {}
+  with tf.GradientTape() as tape:
+    conv_outputs, predictions = grad_model(img_array)
+    loss = predictions[:, 0]
 
-    # Hook last conv layer depending on model type
-    if isinstance(model, type(vgg16(weights=VGG16_Weights.DEFAULT))):
-        layer = model.features[-1]
-    elif isinstance(model, type(resnet50(weights=ResNet50_Weights.DEFAULT))):
-        layer = model.layer4[-1].conv3
-    elif isinstance(model, type(densenet121(weights=DenseNet121_Weights.DEFAULT))):
-        layer = model.features.denseblock4.denselayer16.conv2
-    elif isinstance(model, type(mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT))):
-        # Fix for torchvision >=0.13
-        layer = model.features[-1][0]  # first conv in last block
-    else:
-        raise ValueError("Unsupported model type")
+  grads = tape.gradient(loss, conv_outputs)
 
-    def forward_hook(module, input, output):
-        target['feat'] = output
+  pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
-    def backward_hook(module, grad_input, grad_output):
-        target['grad'] = grad_output[0]
+  conv_outputs = conv_outputs[0]
+  heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+  heatmap = tf.squeeze(heatmap)
 
-    layer.register_forward_hook(forward_hook)
-    layer.register_full_backward_hook(backward_hook)
+  heatmap = tf.maximum(heatmap, 0.0)
 
-    # Preprocess
-    x = preprocess(img_pil).unsqueeze(0).to(device)
-    x.requires_grad = True
+  max_val = tf.math.reduce_max(heatmap)
+  if max_val > 1e-8:
+    heatmap = heatmap / max_val
+  else:
+    heatmap = tf.zeros_like(heatmap)
 
-    # Forward
-    logits = model(x)
-    c = logits.argmax(dim=1).item()
+  return heatmap.numpy()
 
-    # Backward
-    model.zero_grad()
-    logits[0, c].backward()
+def save_and_display_gradcam(img, heatmap, cam_path="cam.png", alpha=0.4):
+  img_np = img_to_array(img)
 
-    # Grad-CAM
-    A = target['feat'][0]
-    dY = target['grad'][0]
-    weights = dY.mean(dim=(1, 2))
-    cam = (weights[:, None, None] * A).sum(dim=0)
-    cam = torch.relu(cam)
-    cam = cam - cam.min()
-    cam = cam / (cam.max() + 1e-8)
+  heatmap = np.uint8(255 * heatmap)
+  jet = plt.get_cmap("jet")
+  jet_colors = jet(np.arange(256))[:, :3]
+  jet_heatmap = jet_colors[heatmap]
 
-    # Resize
-    cam = F.interpolate(cam.unsqueeze(0).unsqueeze(0),
-                        size=(224, 224),
-                        mode='bilinear',
-                        align_corners=False)
-    return cam.squeeze().detach().cpu().numpy()
+  jet_heatmap = tf.keras.preprocessing.image.array_to_img(jet_heatmap)
+  jet_heatmap = jet_heatmap.resize((img_np.shape[1], img_np.shape[0]))
+  jet_heatmap = img_to_array(jet_heatmap)
 
+  superimposed_img = jet_heatmap * alpha + img_np * (1 - alpha)
+  superimposed_img = np.clip(superimposed_img, 0, 255).astype("uint8")
 
-# --- Overlay function ---
-def overlay_cam(img_pil, cam, alpha=0.5):
-    img_np = np.array(img_pil.resize((224, 224))) / 255.0
-    heatmap = plt.get_cmap('jet')(cam)[..., :3]
-    overlay = (1 - alpha) * img_np + alpha * heatmap
-    return np.uint8(overlay * 255)
-
-
-# --- Load image ---
-img_path = r"C:\Users\kikit\OneDrive\Documents\UNIMAP PHD\A. TRAIN DATASET SPLIT\TESTING (10%)\MYC+\P2152-15 B192615_patch_88_78.png"
-img = Image.open(img_path).convert("RGB")
-
-# --- Generate overlays for all models ---
-overlays = {}
-for name, model in models_dict.items():
-    cam = grad_cam(model, img)
-    overlays[name] = overlay_cam(img, cam)
-
-# --- Display each overlay sequentially ---
-for name, overlay in overlays.items():
-    plt.figure(figsize=(6,6))
-    plt.imshow(overlay)
-    plt.axis('off')
-    plt.title(f"Grad-CAM Overlay: {name}")
-    plt.show()   # this will pause until you close the figure
+  plt.figure(figsize=(6, 6))
+  plt.imshow(superimposed_img)
+  plt.axis("off")
+  plt.savefig(cam_path, bbox_inches="tight", pad_inches=0, dpi=300)
+  plt.close()
+  print(f"Saved Grad-CAM overlay to: {cam_path}")
