@@ -115,18 +115,6 @@ All models were trained under identical conditions:
 
 ---
 
-| Parameter | Value |
-|----------|------|
-| Optimizer | Adam |
-| Loss | Binary Cross-Entropy |
-| Batch size | 64 |
-| Epochs | 30, 50, 100, 150, 200 |
-| Framework | PyTorch 2.2 |
-| Python version | 3.10 |
-| GPU | NVIDIA Tesla T4 |
-
----
-
 ### Evaluation Metrics
 
 - Accuracy
